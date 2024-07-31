@@ -4,6 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 from ydata_profiling import ProfileReport
+import os
 
 
 def get_math_stats(df, column):
@@ -135,13 +136,16 @@ def run_EDA(df: pd.DataFrame):
     profile.to_file("assets/data_report.html")
 
 
-if __name__ == '__main__':
-    t1 = perf_counter()
+def main():
     metadata_dict = {
         "file_type": "csv",
         "file_path": "data/train_A.csv",
         "field_terminator": "|"
     }
+    # Create assets folder if doesn't exist
+    if not os.path.exists('assets'):
+        os.makedirs('assets')
+    
     df_brute = load_data(metadata_dict)
     # Run EDA
     print("Running EDA...")
@@ -149,6 +153,11 @@ if __name__ == '__main__':
     # Run Column Explorer
     print("Running Column Explorer...")
     analyze_dataframe(df_brute)
+
+
+if __name__ == '__main__':
+    t1 = perf_counter()
+    main()
     print("\nFinished")
     t2 = perf_counter()
     dt = t2 - t1
