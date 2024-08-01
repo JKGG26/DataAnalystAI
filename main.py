@@ -20,7 +20,11 @@ def get_json_params(json_path: str = 'data/parameters.json'):
 def get_file_provider(parameters: dict, source: str = 'sql_server', test: bool = False) -> tuple:
     if source == 'filesystem':
         # Get load parameters of data to classify
-        load_parameters_data = parameters["filesystem"]["test"]
+        load_parameters_data = parameters["filesystem"]["load"]
+        if test:
+            # Get load parameters of data to classify
+            load_parameters_data = parameters["filesystem"]["test"]
+
         # Build file provider
         return FileSystemProvider(), load_parameters_data
     elif 'sql_server' == source:
@@ -30,7 +34,7 @@ def get_file_provider(parameters: dict, source: str = 'sql_server', test: bool =
         # Build data provider
         data_provider = SQLServerProvider(server, database, user, password)
         if test:
-            table, schema = (data_sql['test'].values())[:2]
+            schema, table = list(data_sql['test'].values())[:2]
         
         #return data_provider.get_all(table, schema)
         return data_provider, {'table': table, 'schema': schema}
@@ -88,11 +92,33 @@ def run_train(no_columns: list = ['ID'], out_folder: str = 'assets'):
     SVC_model.save_model(out_model_path)
     # Save prediction report
     report.to_csv(out_folder + "/Models/model_train_SVC_stats.csv", index=False)
+    #################################################
+    ################## TEST MODELS ##################
+    #################################################
+    # Test model 1: RFC
+    parameters["models"] = {
+        "classification": {
+            "file_path": "assets/Models/model_RFC.pkl"
+        }
+    }
+    # Run model 1 for filesystem
+    use_model(parameters=parameters, out_column='y_pred1')
+    # Run model 1 for SQL Server
+    use_model(parameters=parameters, out_column='y_pred1', source='sql_server')
+    # Test model 2: SVC
+    parameters["models"] = {
+        "classification": {
+            "file_path": "assets/Models/model_SVC.pkl"
+        }
+    }
+    # Run model 2 for filesystem
+    use_model(parameters=parameters, out_column='y_pred2')
+    # Run model 2 for SQL Server
+    use_model(parameters=parameters, out_column='y_pred2', source='sql_server')
 
 
-def use_model(source: str = 'filesystem'):
-    # Get application parameters
-    parameters = get_json_params()
+def use_model(parameters: dict, out_column: str = 'y_pred', source: str = 'filesystem'):
+    # Get file provider and load paramaters
     file_provider, load_parameters_data = get_file_provider(parameters, source, test=True)
     # Get load parameters of classification model
     load_parameters_model = parameters["models"]["classification"]
@@ -110,19 +136,25 @@ def use_model(source: str = 'filesystem'):
 
     # Classify test data in a loop generator with loaded model
     for df, df_info in file_provider.load_tables(load_parameters_data):
+        df_out = df.copy()
         # Get features of data to classify
-        X_test = df.drop('ID', axis=1)
+        for col in list(df_out.keys()):
+            if not str(col).lower().startswith('x'):
+                # Drop columns which name not starts with 'x'
+                df = df.drop(col, axis=1)
+                print('Column removed:', col)
+        
         # Replace outliers with mean per column excluding ID and Y columns
-        X_test = replace_empties_df(X_test)
+        X_test = replace_empties_df(df)
         # Normalize data to classify
         X_test = model.normalize_data(X_test)
         # Get predictions
         model.prediction(X_test)
         prediction = list(model.data_predictions)
         # Modify input DataFrame and add prediction column
-        df['y'] = prediction
+        df_out[out_column] = prediction
         # Save results
-        file_provider.save(df, df_info)
+        file_provider.save(df_out, df_info, out_column)
 
 
 def main(argvs: list):
@@ -133,7 +165,15 @@ def main(argvs: list):
     if mode == 'train':
         run_train()
     elif mode == 'test':
-        use_model()
+        source = 'filesystem'
+        if len(argvs) > 2:
+            source = argvs[2]
+        out_column = 'y_pred'
+        if len(argvs) > 3:
+            out_column = argvs[3]
+        # Get application parameters
+        parameters = get_json_params()
+        use_model(parameters=parameters, out_column=out_column, source=source)
     else:
         raise ValueError(f"Mode '{mode}' not supported")
 
