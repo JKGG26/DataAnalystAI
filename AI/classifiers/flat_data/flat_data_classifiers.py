@@ -38,7 +38,7 @@ class FlatDataClassifier:
         # Set predictions
         self.prediction(self._X_test)
         # Get prediction stats
-        self.prediction_stats(self._y_test)
+        return self.prediction_stats(self._y_test)
 
     def prediction(self, X_df):
         # Predict and evaluate
@@ -47,7 +47,18 @@ class FlatDataClassifier:
     def prediction_stats(self, y_labels):
         self.accuracy = int(accuracy_score(y_labels, self.data_predictions) * 1000000) / 1000000
         print(f"Accuracy: {self.accuracy} = {self.accuracy * 100} %")
-        print(classification_report(y_labels, self.data_predictions))
+        predict_report = classification_report(y_labels, self.data_predictions, output_dict=True)
+        del predict_report['accuracy']
+        prediction_report = []
+        for y, stats in predict_report.items():
+            stats['accuracy'] = self.accuracy
+            stats['class'] = y
+            prediction_report.append(stats)
+
+        report = pd.DataFrame(prediction_report)
+        report_cols = ['class'] + list(report.keys())[:-1]
+        report = report[report_cols]
+        return report
 
     def save_model(self, output_path: str = 'data/model.pkl'):
         with open(output_path, 'wb') as file:
