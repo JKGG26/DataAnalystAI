@@ -1,5 +1,42 @@
 USE DANE_DB
 GO
+---------------------------------------------
+----------------- VARIABLES -----------------
+---------------------------------------------
+-- Set file paths to load
+DECLARE @trainA_file_path nvarchar(350);
+SET @trainA_file_path = 'C:\Users\JhormanDavidGonzález\Documents\Projects\DataAnalystAI\data\train_A.csv';
+
+DECLARE @trainB_file_path nvarchar(350);
+SET @trainB_file_path = 'C:\Users\JhormanDavidGonzález\Documents\Projects\DataAnalystAI\data\train_B.csv';
+
+-- DECLARE SQL command to do BULK INSERT
+DECLARE @SQLA NVARCHAR(MAX)
+SET @SQLA = '
+	BULK INSERT #TempTableStageTrainA
+	FROM ''' + @trainA_file_path + '''
+	WITH (
+		FORMAT = ''CSV'',
+		FIRSTROW = 2,
+		ROWTERMINATOR = ''\n'',
+		FIELDTERMINATOR = ''|''
+	);'
+
+-- DECLARE SQL command to do BULK INSERT
+DECLARE @SQLB NVARCHAR(MAX)
+SET @SQLB = '
+	BULK INSERT #TempTableStageTrainB
+	FROM ''' + @trainB_file_path + '''
+	WITH (
+		FORMAT = ''CSV'',
+		FIRSTROW = 2,
+		ROWTERMINATOR = ''\n'',
+		FIELDTERMINATOR = ''|''
+	);'
+
+---------------------------------------------
+---------------- PREPARATION ----------------
+---------------------------------------------
 -- Check if temporal staging tabel already exists and drop it
 IF OBJECT_ID('tempdb..#TempTableStageTrainA') IS NOT NULL
 BEGIN
@@ -38,15 +75,8 @@ CREATE TABLE #TempTableStageTrainA (
 	X_15 nvarchar(25) NULL,
 	Y_A nvarchar(2) NULL
 );
--- Select temporal table
-BULK INSERT #TempTableStageTrainA
-FROM 'C:\Users\JhormanDavidGonzález\Documents\Projects\DataAnalystAI\data\Train_A.csv'
-WITH (
-	FORMAT = 'CSV',
-	FIRSTROW = 2,
-	ROWTERMINATOR = '\n',
-	FIELDTERMINATOR = '|'
-);
+-- Select temporal table and BULK INSERT of Train_A file
+EXEC sp_executesql @SQLA;
 
 ------------------------------------------------
 ----- Load Train_B data into stating table -----
@@ -71,15 +101,8 @@ CREATE TABLE #TempTableStageTrainB (
 	X_30 nvarchar(25) NULL,
 	Y_B nvarchar(2) NULL
 );
--- Select temporal table
-BULK INSERT #TempTableStageTrainB
-FROM 'C:\Users\JhormanDavidGonzález\Documents\Projects\DataAnalystAI\data\Train_B.csv'
-WITH (
-	FORMAT = 'CSV',
-	FIRSTROW = 2,
-	ROWTERMINATOR = '\n',
-	FIELDTERMINATOR = '|'
-);
+-- Select temporal table and BULK INSERT of Train_B file
+EXEC sp_executesql @SQLB;
 
 -- JOIN tables from Train_A and Train B
 SELECT stg_ta.ID_A AS ID, stg_ta.*, stg_tb.*, stg_ta.Y_A AS Y
