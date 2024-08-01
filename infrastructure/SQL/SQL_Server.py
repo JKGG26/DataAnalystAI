@@ -21,10 +21,31 @@ class SQLServerProvider:
         return df
     
     def load_tables(self, params: dict):
-        table = params['table']
+        tables = params['table']
         schema = params['schema']
-        for df in [self.get_all(table, schema)]:
+        if isinstance(tables, str):
+            tables = [tables]
+        
+        for table in tables:
+            df = self.get_all(table, schema)
             yield df, f"{schema}|{table}"
 
-    def save(self, df: pd.DataFrame, df_info: str):
-        table, schema = df_info.split("|")
+    def save(self, df: pd.DataFrame, df_info: str, out_column: str = 'y_pred'):
+        schema, table = df_info.split("|")  # Ex: dbo|table_name
+        # Id column to filter and Y column to modify data
+        column_name = out_column
+        id_column = 'ID'
+
+        with self.__conn.cursor() as cursor:
+            for item in df[['ID', out_column]].to_dict(orient='records'):
+                sql = f"""
+                UPDATE [{schema}].[{table}]
+                SET {column_name} = ?
+                WHERE {id_column} = ?
+                """
+                cursor.execute(sql, (item[out_column], item['ID']))
+
+        # Commit the transaction
+        cursor.commit()
+        # Close the connection
+        cursor.close()
