@@ -34,7 +34,7 @@ class FileSystemProvider:
                 source_metadata = file
                 yield self.load_data(source_metadata), file_path
 
-    def save(self, df: pd.DataFrame, df_info: str):
+    def save(self, df: pd.DataFrame, df_info: str, out_column: str = None):
         file_path = df_info
         # Create predictions folder
         base_folder = os.path.dirname(file_path) + "/prediction"
@@ -42,6 +42,12 @@ class FileSystemProvider:
             os.makedirs(base_folder)
 
         output_file_path = base_folder + "/prediction_" + os.path.basename(file_path)
+
+        if os.path.exists(output_file_path):
+            # Load existing results and update predictions
+            old_df = pd.read_csv(output_file_path)
+            old_df[out_column] = df[out_column]
+            df = old_df
+
         df.to_csv(output_file_path, index=False)
-        df.to_csv(file_path, index=False)
         print(f"\nResults were saved in '{output_file_path}'")
