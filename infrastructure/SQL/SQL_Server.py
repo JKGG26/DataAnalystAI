@@ -19,3 +19,12 @@ class SQLServerProvider:
         """
         df = pd.read_sql(query, self.__conn)
         return df
+    
+    def load_tables(self, params: dict):
+        table = params['table']
+        schema = params['schema']
+        for df in [self.get_all(table, schema)]:
+            yield df, f"{schema}|{table}"
+
+    def save(self, df: pd.DataFrame, df_info: str):
+        table, schema = df_info.split("|")
