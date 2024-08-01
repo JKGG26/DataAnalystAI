@@ -3,7 +3,7 @@ from EDA.data_format import replace_empties_df
 from infrastructure.SQL.SQL_Server import SQLServerProvider
 from AI.classifiers.flat_data.flat_data_classifiers import RFClassifier, SVMClassifier
 
-from infrastructure.filesystem.filesystem import load_files
+from infrastructure.filesystem.filesystem import FileSystemProvider
 
 from time import perf_counter
 import json
@@ -17,14 +17,23 @@ def get_json_params(json_path: str = 'data/parameters.json'):
     return data_dict
 
 
-def get_data(source: str = 'sql_server'):
-    if 'sql_server' == source:
+def get_file_provider(parameters: dict, source: str = 'sql_server', test: bool = False) -> tuple:
+    if source == 'filesystem':
+        # Get load parameters of data to classify
+        load_parameters_data = parameters["filesystem"]["test"]
+        # Build file provider
+        return FileSystemProvider(), load_parameters_data
+    elif 'sql_server' == source:
         # Get SQL Server data connection parameters
-        data_sql = get_json_params()['sql']['sql_server']
-        server, database, user, password, schema, table = list(data_sql.values())
+        data_sql = parameters['sql']['sql_server']
+        server, database, user, password, schema, table = list(data_sql.values())[:6]
         # Build data provider
         data_provider = SQLServerProvider(server, database, user, password)
-        return data_provider.get_all(table, schema)
+        if test:
+            table, schema = (data_sql['test'].values())[:2]
+        
+        #return data_provider.get_all(table, schema)
+        return data_provider, {'table': table, 'schema': schema}
     else:
         raise ValueError(f"Source '{source}' not supported")
 
@@ -35,8 +44,11 @@ def run_train(no_columns: list = ['ID'], out_folder: str = 'assets'):
         os.makedirs(out_folder + "/EDA")
     if not os.path.exists(out_folder + "/Models"):
         os.makedirs(out_folder + "/Models")
+    
+    parameters = get_json_params()
+    file_provider, load_parameters = get_file_provider(parameters, 'sql_server')
     # Get data in DataFrame format
-    df = get_data()
+    df = file_provider.get_all(load_parameters['table'], load_parameters['schema'])
     # Save df into a csv file
     df.to_csv(out_folder + "/EDA/train_data.csv")
     # Run EDA and generate summary report
@@ -78,14 +90,12 @@ def run_train(no_columns: list = ['ID'], out_folder: str = 'assets'):
     report.to_csv(out_folder + "/Models/model_train_SVC_stats.csv", index=False)
 
 
-def use_model():
+def use_model(source: str = 'filesystem'):
     # Get application parameters
-    parameters = json.loads(open('data/parameters.json').read())
-    # Get load parameters of data to classify
-    load_parameters_data = parameters["filesystem"]["test"]
+    parameters = get_json_params()
+    file_provider, load_parameters_data = get_file_provider(parameters, source, test=True)
     # Get load parameters of classification model
     load_parameters_model = parameters["models"]["classification"]
-
     # Load classification model
     model_file_path = load_parameters_model['file_path']
     model_filename = os.path.basename(model_file_path)
@@ -99,7 +109,7 @@ def use_model():
         raise ValueError(f"Model '{model_file_path}' not supported")
 
     # Classify test data in a loop generator with loaded model
-    for df, file_path in load_files(load_parameters_data):
+    for df, df_info in file_provider.load_tables(load_parameters_data):
         # Get features of data to classify
         X_test = df.drop('ID', axis=1)
         # Replace outliers with mean per column excluding ID and Y columns
@@ -109,14 +119,10 @@ def use_model():
         # Get predictions
         model.prediction(X_test)
         prediction = list(model.data_predictions)
-        # Create predictions folder
-        base_folder = os.path.dirname(file_path) + "/prediction"
-        if not os.path.exists(base_folder):
-            os.makedirs(base_folder)
         # Modify input DataFrame and add prediction column
         df['y'] = prediction
-        output_file_path = base_folder + "/prediction_" + os.path.basename(file_path)
-        df.to_csv(output_file_path, index=False)
+        # Save results
+        file_provider.save(df, df_info)
 
 
 def main(argvs: list):
