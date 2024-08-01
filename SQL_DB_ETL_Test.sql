@@ -108,7 +108,9 @@ BEGIN
 		[X_28] [decimal](20, 18) NULL,
 		[X_29] [decimal](20, 18) NULL,
 		[X_30] [decimal](20, 18) NULL,
-		[Y] [tinyint] NULL
+		[y1_pred] [tinyint] NULL,
+		[y2_pred] [tinyint] NULL,
+		[y_pred] [tinyint] NULL
 	)
 END;
 -- COPY data from #TempTableStageTrain INTO [dbo].[t_data_test]
@@ -145,6 +147,8 @@ SELECT
 	TRY_CONVERT(DECIMAL(20, 18), X_28) AS X_28,
 	TRY_CONVERT(DECIMAL(20, 18), X_29) AS X_29,
 	TRY_CONVERT(DECIMAL(20, 18), X_30) AS X_30,
+	NULL,
+	NULL,
 	NULL
 FROM #TempTableStageTest;
 
