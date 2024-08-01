@@ -25,11 +25,11 @@ class FlatDataClassifier:
         # Split data into training and testing sets
         self._X_train, self._X_test, self._y_train, self._y_test = train_test_split(X, y, test_size=0.3, random_state=42)
 
-    def normalize_data(self, X_df):
+    def normalize_data(self, X_df) -> pd.DataFrame:
         scaler = StandardScaler()
         return scaler.fit_transform(X_df)
 
-    def train(self):
+    def train(self) -> pd.DataFrame:
         # Normalize data
         self._X_train = self.normalize_data(self._X_train)
         self._X_test = self.normalize_data(self._X_test)
@@ -70,18 +70,23 @@ class FlatDataClassifier:
         # Load the model from the file
         with open(input_path, 'rb') as file:
             self._model = pickle.load(file)
+        print(f"Model '{input_path}' loaded succesfully!")
 
     
 class RFClassifier(FlatDataClassifier):
-    def __init__(self) -> None:
+    def __init__(self, file_path: str = None) -> None:
         super().__init__()
         self._model = RandomForestClassifier(random_state=42)
+        if file_path is not None:
+            self.load_model(file_path)
         print("\nRANDOM FOREST CLASSIFIER:\n")
 
     
 class SVMClassifier(FlatDataClassifier):
-    def __init__(self) -> None:
+    def __init__(self, file_path: str = None) -> None:
         super().__init__()
         self._model = SVC(random_state=42)
+        if file_path is not None:
+            self.load_model(file_path)
         print("\nSUPPORT VECTOR CLASSIFIER:\n")
     
