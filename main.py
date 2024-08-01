@@ -48,10 +48,13 @@ def run_train(out_folder: str = 'assets'):
     # Set train datasets
     RFC_model.set_train_data(df)
     # Normalize data, train model and get accuracy info
-    RFC_model.train()
+    report = RFC_model.train()
+    print(report)
     # Save model
     out_model_path = out_folder + "/Models/model_RFC.pkl"
     RFC_model.save_model(out_model_path)
+    # Save prediction report
+    report.to_csv(out_folder + "/Models/model_train_RFC_stats.csv", index=False)
     ##################################################
     ######## Classifier Model 2: SVMClassifier #######
     ##################################################
@@ -60,10 +63,13 @@ def run_train(out_folder: str = 'assets'):
     # Set train datasets
     SVC_model.set_train_data(df)
     # Normalize data, train model and get accuracy info
-    SVC_model.train()
+    report = SVC_model.train()
+    print(report)
     # Save model
     out_model_path = out_folder + "/Models/model_SVC.pkl"
     SVC_model.save_model(out_model_path)
+    # Save prediction report
+    report.to_csv(out_folder + "/Models/model_train_SVC_stats.csv", index=False)
 
 
 if __name__ == '__main__':
