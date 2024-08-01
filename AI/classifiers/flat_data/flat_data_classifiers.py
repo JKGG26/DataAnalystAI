@@ -4,6 +4,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import classification_report, accuracy_score
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.svm import SVC
+import pickle
 
 
 class FlatDataClassifier:
@@ -14,48 +15,62 @@ class FlatDataClassifier:
         self._y_train = None
         self._y_test = None
 
-    def get_train_data(self, df):
+        self._model = None
+        self.data_predictions = None
+        self.accuracy = 0
+
+    def set_train_data(self, df):
         X = df.drop('Y', axis=1)
         y = df['Y']
         # Split data into training and testing sets
         self._X_train, self._X_test, self._y_train, self._y_test = train_test_split(X, y, test_size=0.3, random_state=42)
 
-    def normalize_data(self):
+    def normalize_data(self, X_df):
         scaler = StandardScaler()
-        self._X_train = scaler.fit_transform(self._X_train)
-        self._X_test = scaler.transform(self._X_test)
+        return scaler.fit_transform(X_df)
+
+    def train(self):
+        # Normalize data
+        self._X_train = self.normalize_data(self._X_train)
+        self._X_test = self.normalize_data(self._X_test)
+        # Train the SVM model
+        self._model.fit(self._X_train, self._y_train)
+        # Set predictions
+        self.prediction(self._X_test)
+        # Get prediction stats
+        self.prediction_stats(self._y_test)
+
+    def prediction(self, X_df):
+        # Predict and evaluate
+        self.data_predictions = self._model.predict(X_df)
+
+    def prediction_stats(self, y_labels):
+        self.accuracy = int(accuracy_score(y_labels, self.data_predictions) * 1000000) / 1000000
+        print(f"Accuracy: {self.accuracy} = {self.accuracy * 100} %")
+        print(classification_report(y_labels, self.data_predictions))
+
+    def save_model(self, output_path: str = 'data/model.pkl'):
+        with open(output_path, 'wb') as file:
+            pickle.dump(self._model, file)
+
+        print(f"\nModel saved in '{output_path}'")
+
+    def load_model(self, input_path: str = 'data/model.pkl'):
+        # Load the model from the file
+        with open(input_path, 'rb') as file:
+            self._model = pickle.load(file)
 
     
 class RFClassifier(FlatDataClassifier):
     def __init__(self) -> None:
         super().__init__()
-        self.__rf_model = RandomForestClassifier(random_state=42)
-
-    def train(self):
-        # Train the Random Forest model
-        self.__rf_model.fit(self._X_train, self._y_train)
-
-    def prediction(self):
-        # Predict and evaluate
-        rf_predictions = self.__rf_model.predict(self._X_test)
-        print("Random Forest Classifier")
-        print(f"Accuracy: {accuracy_score(self._y_test, rf_predictions)}")
-        print(classification_report(self._y_test, rf_predictions))
+        self._model = RandomForestClassifier(random_state=42)
+        print("\nRANDOM FOREST CLASSIFIER:\n")
 
     
 class SVMClassifier(FlatDataClassifier):
     def __init__(self) -> None:
         super().__init__()
-        self.__svm_model = SVC(random_state=42)
-
-    def train(self):
-        # Train the SVM model
-        self.__svm_model.fit(self._X_train, self._y_train)
-
-    def prediction(self):
-        # Predict and evaluate
-        svm_predictions = self.__svm_model.predict(self._X_test)
-        print("Support Vector Classifier")
-        print(f"Accuracy: {accuracy_score(self._y_test, svm_predictions)}")
-        print(classification_report(self._y_test, svm_predictions))
+        self._model = SVC(random_state=42)
+        print("\nSUPPORT VECTOR CLASSIFIER:\n")
     
