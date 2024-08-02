@@ -1,0 +1,43 @@
+{
+    "filesystem": {
+        "load": [
+            {
+                "file_type": "csv",
+                "field_terminator": "|",
+                "file_paths": [
+                    "data/train_A.csv",
+                    "data/train_B.csv",
+                    "data/test_send.csv"
+                ]
+            }
+        ],
+        "test": [
+            {
+                "file_type": "csv",
+                "field_terminator": "|",
+                "file_paths": [
+                    "data/test_send.csv"
+                ]
+            }
+        ]
+    },
+    "sql": {
+        "sql_server": {
+            "server": "localhost\\SQLEXPRESS",
+            "database": "DB_name",
+            "user": null,
+            "password": null,
+            "schema": "dbo",
+            "table": "t_data_train",
+            "test": {
+                "schema": "dbo",
+                "table": "t_data_test"
+            }
+        }
+    },
+    "models": {
+        "classification": {
+            "file_path": "assets/Models/model_SVC.pkl"
+        }
+    }
+}
