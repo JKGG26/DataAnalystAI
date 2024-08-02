@@ -52,21 +52,22 @@ To clone the repository, follow these steps:
 ### Clone the repository:
 
 ```sh
-Copy code
 git clone https://github.com/JKGG26/DataAnalystAI.git
-Navigate to the project directory:
 ```
 
+### Navigate to the project directory:
+
 ```sh
-Copy code
 cd DataAnalystAI
 ```
 
 ## Installation
 
-Ensure you have Python 3.x installed. Then, install the required packages using pip:
+Ensure you have Python 3.x installed. Then, create a python venv, activate it and install the required packages using pip:
 
 ```sh
+python -m venv venv
+venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
