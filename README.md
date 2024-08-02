@@ -297,7 +297,3 @@ To test the trained models:
 - **File Not Found Errors**: Ensure file paths in `data/parameters.json` are correct and files exist.
 - **Database Connection Issues**: Verify database credentials and network connectivity.
 - **Library Errors**: Make sure all required libraries are installed.
-
-## License
-
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for more details.

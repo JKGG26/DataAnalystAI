@@ -114,8 +114,6 @@ To run the EDA module:
 - **`data/parameters.json`**: Configuration file with metadata for loading data.
 - **`EDA/`**: Contains the `EDA.py` script.
 
-## License
-This module is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
 
 ## Acknowledgements
 - Libraries used: `pandas`, `numpy`, `matplotlib`, `seaborn`, `ydata_profiling`.
