@@ -79,9 +79,58 @@ Update `data/parameters.json` with the appropriate file paths and database conne
 
 ### `data/parameters.json`
 
-Defines the parameters for data loading and model configuration. 
+This JSON file contains configuration parameters for data loading, SQL Server connection, and model file paths. Here's what each parameter represents:
 
-**Example:**
+#### 1. **Filesystem Configuration**
+
+**Path: `filesystem`**
+
+This section specifies how to load data from the file system.
+
+- **`load`**: Configuration for loading data files for training and testing.
+
+  - **`file_type`**: The type of file to load. Currently, only `"csv"` is supported. 
+  - **`field_terminator`**: The delimiter used in the CSV files (e.g., `|`, `,`).
+  - **`file_paths`**: List of file paths to be processed. Each path should point to a CSV file.
+
+- **`test`**: Configuration for loading data files specifically for testing.
+
+  - **`file_type`**: The type of file to load, similar to the `load` section.
+  - **`field_terminator`**: The delimiter used in the CSV files.
+  - **`file_paths`**: List of file paths for testing data.
+
+#### 2. **SQL Server Configuration**
+
+**Path: `sql`**
+
+This section specifies how to connect to and interact with a SQL Server database.
+
+- **`sql_server`**: Configuration for connecting to SQL Server.
+
+  - **`server`**: The SQL Server instance name. For local instances, it’s typically in the format `localhost\SQLEXPRESS`.
+  - **`database`**: The name of the database to connect to.
+  - **`user`**: The username for SQL Server authentication. Set to `null` for Windows authentication.
+  - **`password`**: The password for SQL Server authentication. Set to `null` for Windows authentication.
+  - **`schema`**: The schema in the database to use. Default is `dbo`.
+  - **`table`**: The table name from which to load data for training.
+  - **`test`**: Configuration for loading test data from SQL Server.
+
+    - **`schema`**: The schema in the database for test data.
+    - **`table`**: The table name for test data.
+
+#### 3. **Model Configuration**
+
+**Path: `models`**
+
+This section specifies the paths to model files.
+
+- **`classification`**: Configuration for classification models.
+
+  - **`file_path`**: Path to the pre-trained classification model file. This path is used when testing models to load the saved model and make predictions.
+
+### Example Configuration
+
+Here's an example configuration and what each part represents:
 
 ```json
 {
@@ -129,6 +178,27 @@ Defines the parameters for data loading and model configuration.
 }
 ```
 
+- **`filesystem.load`**:
+  - **`file_type`**: `csv`, indicating the files are CSVs.
+  - **`field_terminator`**: `|`, the delimiter used in the CSV files.
+  - **`file_paths`**: List of CSV files to load for training and testing.
+
+- **`filesystem.test`**:
+  - Similar configuration to `filesystem.load`, but used for testing data.
+
+- **`sql.sql_server`**:
+  - **`server`**: `localhost\SQLEXPRESS`, the SQL Server instance.
+  - **`database`**: `DANE_DB`, the database name.
+  - **`user`** and **`password`**: Set to `null` for Windows authentication.
+  - **`schema`**: `dbo`, the schema for the database.
+  - **`table`**: `t_data_train`, the table for training data.
+  - **`test`**: Configuration for test data table.
+
+- **`models.classification`**:
+  - **`file_path`**: Path to the saved classification model (`model_SVC.pkl`).
+
+This configuration allows the project to adapt to different data sources (file system or SQL Server) and model files. Adjust the paths and parameters as needed based on your environment and data sources.
+
 ### `main.py`
 
 Main script to either train models or test predictions.
@@ -151,6 +221,8 @@ Script for performing Exploratory Data Analysis (EDA) on data files.
 
 **Functions:**
 - `run_EDA(df: pd.DataFrame, output_path: str)`: Runs EDA and generates reports.
+- `analyze_dataframe(df: pd.DataFrame, output_path: str)`: Analyzes DataFrame by summarizing columns and identifying outliers.
+- `main()`: (Default) Execute run_EDA() and analyze_dataframe() functions
 
 **Usage:**
 
