@@ -56,7 +56,7 @@ def run_train(no_columns: list = ['ID'], out_folder: str = 'assets'):
     # Save df into a csv file
     df.to_csv(out_folder + "/EDA/train_data.csv")
     # Run EDA and generate summary report
-    #run_EDA(df, out_folder + "/EDA")
+    run_EDA(df, out_folder + "/EDA")
     # Replace outliers with mean per column excluding ID and Y columns
     df = replace_empties_df(df, no_columns=['ID', 'Y'])
     # Remove no features columns
